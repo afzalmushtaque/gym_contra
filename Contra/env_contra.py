@@ -41,14 +41,10 @@ class ContraEnv(NESEnv):
         self._target_world, self._target_stage, self._target_area = target
 
         # setup a variable to keep track of the last frames x position
-        self._x_position_last = 0
-        # reset the emulator
-        self.reset()
-        # skip the start screen
-        self._skip_start_screen()
-        # create a backup state to restore from on subsequent calls to reset
-        self._backup()
-        print("Make_done")
+        self._x_position_last = None
+        self._score_last = None
+        self.horz_scroll_offset_last = None
+
 
     @property
     def is_single_stage_env(self):
@@ -111,6 +107,15 @@ class ContraEnv(NESEnv):
         return self.ram[0x031A]
 
     @property
+    def get_x_position(self):
+        """Return the current horizontal position."""
+        return self.ram[0x0334]
+
+    @property
+    def horz_scroll_offset(self):
+        return self.ram[0x00FD]
+
+    @property
     def _y_position(self):
         """Return the current vertical position."""
         # check if player's is above the viewport (the score board area)
@@ -153,12 +158,13 @@ class ContraEnv(NESEnv):
         _reward = self._x_position - self._x_position_last
         # print("_reward ", _reward)
         self._x_position_last = self._x_position
-        # TODO: check whether this is still necessary
-        # resolve an issue where after death the x position resets. The x delta
-        # is typically has at most magnitude of 3, 5 is a safe bound
-        if _reward < -5 or _reward > 5:
-            return 0
+        return _reward
 
+    @property
+    def _horz_offset_reward(self):
+        """Return the reward based on left right movement between steps."""
+        _reward = self.horz_scroll_offset - self.horz_scroll_offset_last
+        self.horz_scroll_offset_last = self.horz_scroll_offset
         return _reward
 
     @property
@@ -166,18 +172,14 @@ class ContraEnv(NESEnv):
         """Return the reward earned by dying."""
         if self._is_dying or self._is_dead:
             return -25
-
         return 0
-
-    # MARK: nes-py API calls
-    def _will_reset(self):
-        """Handle and RAM hacking before a reset occurs."""
-        self._x_position_last = 0
-        self._dead_count = 0
 
     def _did_reset(self):
         """Handle any RAM hacking after a reset occurs."""
+        self._skip_start_screen()
         self._x_position_last = self._x_position
+        self.horz_scroll_offset_last = self.horz_scroll_offset
+        self._score_last = 0
         self._dead_count = 0
 
     # have to recode
@@ -210,7 +212,16 @@ class ContraEnv(NESEnv):
 
     def _get_reward(self):
         """Return the reward after a step occurs."""
-        return self._x_reward + self._death_penalty + self._get_boss_defeated_reward() + self._score()
+        step_score = self._score() - self._score_last
+        self._score_last = self._score()
+        # + self._death_penalty + self._get_boss_defeated_reward() + self._score() + step_score
+        if self._player_state == 2:
+            death_penalty = -1
+        else:
+            death_penalty = 0
+        if step_score != 0:
+            print('Step score: {0:,.0f}'.format(step_score))
+        return np.clip(self._x_reward, -0.001, 0.001) + np.clip(self._horz_offset_reward, -0.001, 0.001) + step_score + death_penalty - 0.0001
 
     @property
     def _get_boss_defeated(self):
@@ -240,13 +251,12 @@ class ContraEnv(NESEnv):
 
     def _get_done(self):
         """Return True if the episode is over, False otherwise."""
-        if self._is_game_over or self._get_boss_defeated:
+        if self._is_game_over or self._get_boss_defeated or self._player_state == 2:
             return True
         return False
 
     def _get_info(self):
         """Return the info after a step occurs"""
-        print("Score", self._score())
         return dict(
             life=self._life,
             dead=self._is_dead,
