@@ -12,8 +12,6 @@ _ENEMY_TYPE_ADDRESSES = [0x0016, 0x0017, 0x0018, 0x0019, 0x001A]
 class ContraEnv(NESEnv):
     """An OpenAI Gym interface to the NES game <TODO: Contra>"""
 
-    reward_range = (-15, 15)
-
     def __init__(self, lost_levels=False, target=None):
         """
         Initialize a new Contra environment.
@@ -44,7 +42,6 @@ class ContraEnv(NESEnv):
         self._x_position_last = None
         self._score_last = None
         self.horz_scroll_offset_last = None
-
 
     @property
     def is_single_stage_env(self):
@@ -97,17 +94,12 @@ class ContraEnv(NESEnv):
         return self.ram[0x0032]
 
     @property
-    def _x_position(self):
-        """Return the current horizontal position."""
-        return self.ram[0x0334]
-
-    @property
     def _y_pixel(self):
         """Return the current vertical position."""
         return self.ram[0x031A]
 
     @property
-    def get_x_position(self):
+    def x_position(self):
         """Return the current horizontal position."""
         return self.ram[0x0334]
 
@@ -132,7 +124,7 @@ class ContraEnv(NESEnv):
         return self.ram[0x0090]
 
     @property
-    def _is_dying(self):
+    def is_dying(self):
         """Return True if Mario is in dying animation, False otherwise."""
         return self._player_state == 2
 
@@ -154,10 +146,8 @@ class ContraEnv(NESEnv):
     @property
     def _x_reward(self):
         """Return the reward based on left right movement between steps."""
-        # print("self._x_position", self._x_position)
-        _reward = self._x_position - self._x_position_last
-        # print("_reward ", _reward)
-        self._x_position_last = self._x_position
+        _reward = self.x_position - self._x_position_last
+        self._x_position_last = self.x_position
         return _reward
 
     @property
@@ -170,14 +160,14 @@ class ContraEnv(NESEnv):
     @property
     def _death_penalty(self):
         """Return the reward earned by dying."""
-        if self._is_dying or self._is_dead:
+        if self.is_dying or self._is_dead:
             return -25
         return 0
 
     def _did_reset(self):
         """Handle any RAM hacking after a reset occurs."""
         self._skip_start_screen()
-        self._x_position_last = self._x_position
+        self._x_position_last = self.x_position
         self.horz_scroll_offset_last = self.horz_scroll_offset
         self._score_last = 0
         self._dead_count = 0
@@ -198,7 +188,7 @@ class ContraEnv(NESEnv):
         if done:
             return
         # if players is dying, then cut to the chase and kill hi,
-        if self._is_dying:
+        if self.is_dying:
             self._frame_advance(0)
             self._frame_advance(0)
             self._frame_advance(0)
@@ -263,7 +253,7 @@ class ContraEnv(NESEnv):
             done=self._get_done(),
             score=self._score(),
             status=self._player_state,
-            x_pos=self._x_position,
+            x_pos=self.x_position,
             y_pos=self._y_position,
             defeated=self._get_boss_defeated
         )
