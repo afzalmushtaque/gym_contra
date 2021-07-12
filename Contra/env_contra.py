@@ -211,7 +211,8 @@ class ContraEnv(NESEnv):
             death_penalty = 0
         if step_score != 0:
             print('Step score: {0:,.0f}'.format(step_score))
-        return np.clip(self._x_reward, -0.001, 0.001) + np.clip(self._horz_offset_reward, -0.001, 0.001) + step_score + death_penalty - 0.0001
+        return step_score + death_penalty
+        # return np.clip(self._x_reward, -0.001, 0.001) + np.clip(self._horz_offset_reward, -0.001, 0.001) + step_score + death_penalty - 0.0001
 
     @property
     def _get_boss_defeated(self):
