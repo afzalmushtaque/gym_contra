@@ -154,7 +154,7 @@ class CustomContra(gym.Env):
         #     self.times_restored = 3 * 3 * 2 * 2
         #     logging.warning('failed to execute opcode')
         
-        logging.debug('Step: {0:,.0f}, Action: {1}, Reward: {2:,.0f}, Total Reward: {3:,.0f}'.format(self.current_step, str(action), reward, self.total_reward, self.env.horz_scroll_offset, self.env.get_x_position))
+        logging.debug('Step: {0:,.0f}, Action: {1}, Reward: {2:,.0f}, Total Reward: {3:,.0f}'.format(self.current_step, str(action), reward, self.total_reward, self.env.horz_scroll_offset, self.env.x_position))
         self.current_step += 1
         self.total_reward += reward
         # if self.total_reward < -5:

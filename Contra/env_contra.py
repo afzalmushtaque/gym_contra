@@ -4,6 +4,8 @@ from nes_py import NESEnv
 import time
 from Contra.ROMs.decode_target import decode_target
 from Contra.ROMs.rom_path import rom_path
+import logging
+
 
 _STAGE_OVER_ENEMIES = np.array([0x2D, 0x31])
 _ENEMY_TYPE_ADDRESSES = [0x0016, 0x0017, 0x0018, 0x0019, 0x001A]
@@ -210,7 +212,7 @@ class ContraEnv(NESEnv):
         else:
             death_penalty = 0
         if step_score != 0:
-            print('Step score: {0:,.0f}'.format(step_score))
+            logging.debug('Step score: {0:,.0f}'.format(step_score))
         return step_score + death_penalty
         # return np.clip(self._x_reward, -0.001, 0.001) + np.clip(self._horz_offset_reward, -0.001, 0.001) + step_score + death_penalty - 0.0001
 
