@@ -208,7 +208,7 @@ class ContraEnv(NESEnv):
         self._score_last = self._score()
         # + self._death_penalty + self._get_boss_defeated_reward() + self._score() + step_score
         if self._player_state == 2:
-            death_penalty = -1
+            death_penalty = 0
         else:
             death_penalty = 0
         if step_score != 0:

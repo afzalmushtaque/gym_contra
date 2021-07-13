@@ -143,10 +143,10 @@ class CustomContra(gym.Env):
         # with stdout_redirector(f):
         state, reward, done, info = self.env.step(nes_action)
         # state = self.env.ram/255.0
-        if action[2]==1:
-            reward -= 0.1
-        if action[3]==1:
-            reward -= 0.1
+        # if action[2]==1:
+        #     reward -= 0.1
+        # if action[3]==1:
+        #     reward -= 0.1
         # result = f.getvalue().decode('utf-8')
         # if 'failed to execute opcode' in result:
         #     reward = 0
